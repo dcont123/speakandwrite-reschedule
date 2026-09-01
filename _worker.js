@@ -278,9 +278,11 @@ function pageJs_(token) {
     '    .catch(function (err) {\n' +
     '      btn.disabled = false; btn.textContent = "Confirm new time";\n' +
     '      const box = document.getElementById("errorBox");\n' +
-    '      box.textContent = "That time couldn\'t be booked — it may have just been taken. Please pick another time.";\n' +
+    '      box.textContent = "That time couldn\'t be booked — it may have just been taken. Refreshing available times…";\n' +
     '      box.classList.add("show");\n' +
     '      console.error(err);\n' +
+    '      selectedSlot = null;\n' +
+    '      loadSlots();\n' +
     '    });\n' +
     '});\n' +
     'function onBooked(slot) {\n' +
