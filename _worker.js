@@ -112,7 +112,7 @@ function escapeHtml_(str) {
 function pageHtml_(data, token) {
   const isClient = data.type === 'client';
   const eyebrow = isClient ? 'Rebooking your session' : 'Rebooking a cancelled session';
-  const title = "Hi " + escapeHtml_(data.patientFirstName) + " — " + (isClient ? "let's get you rebooked" : "let's find a new time");
+  const title = "Hi " + escapeHtml_(data.patientFirstName) + " — " + (isClient ? "let's get you rebooked" : "let's find a make-up time for your missed session");
   const sub = isClient
     ? "You let us know your session with " + escapeHtml_(data.practitionerName) + " wasn't going to work. Whenever you're ready, pick a new time below and it's locked in straight away."
     : "Your session with " + escapeHtml_(data.practitionerName) + " couldn't go ahead — " + escapeHtml_(data.practitionerName) + " is unavailable. Pick any time below and it's locked in straight away, no need to call.";
@@ -141,20 +141,26 @@ function pageHtml_(data, token) {
     (data.locationName ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.locationName) + '</div>\n' : '') +
     (data.serviceDuration ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9B6FC5" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.serviceDuration) + '-minute session</div>\n' : '') +
     (data.serviceName ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12c1.5-4 2.5-4 4 0s2.5 4 4 0 2.5-4 4 0 2.5 4 4 0" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' + escapeHtml_(data.serviceName) + '</div>\n' : '') +
-    (data.originalTimeDisplay ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.patientFirstName) + '\'s cancelled time was <b>' + escapeHtml_(data.originalTimeDisplay) + '</b></div>\n' : '') +
+    (data.originalTimeDisplay ?
+      '      <div class="original-time-box">' +
+        '<div class="otb-label">' + escapeHtml_(data.patientFirstName) + '\'s cancelled time was</div>' +
+        '<div class="otb-value">' + escapeHtml_(data.originalTimeDisplay) + '</div>' +
+      '</div>\n' +
+      '      <p class="otb-instruction">Choose a make-up time from the calendar.</p>\n'
+    : '') +
     '      <div style="margin-top:14px;"><span class="badge purple">This link is just for ' + escapeHtml_(data.patientFirstName) + '</span></div>\n' +
     '    </div>\n' +
     '    <div class="slots-card card">\n' +
     '      <div id="loadingState" class="state">Finding available times…</div>\n' +
     '      <div id="emptyState" class="state" style="display:none;">No times available in the next 7 days — please contact the practice directly.</div>\n' +
     '      <div id="pickerArea" style="display:none;">\n' +
-    '        <div class="slots-head"><h3>Choose a new time</h3></div>\n' +
+    '        <div class="slots-head"><h3>Choose a session make-up time</h3></div>\n' +
     '        <div class="day-tabs" id="dayTabs"></div>\n' +
     '        <div class="slot-grid" id="slotGrid"></div>\n' +
     '        <div class="legend">\n' +
     '          <span><i style="background:#fff; border:1.4px solid #ece4f3;"></i> Standard opening</span>\n' +
     '          <span><i style="background:var(--gold-soft); border:1.4px solid var(--gold);"></i> Extra availability</span>\n' +
-    '          <span>★ Your usual time</span>\n' +
+    '          <span><i style="background:#e6f5ec; border:1.4px solid #5ba97a;"></i> Usual time</span>\n' +
     '        </div>\n' +
     '        <div class="cta-row">\n' +
     '          <button class="btn" id="confirmBtn" disabled>Confirm new time</button>\n' +
@@ -191,16 +197,22 @@ function pageCss_() {
     '.avatar{width:52px;height:52px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-family:"Fraunces",serif;font-weight:600;font-size:19px;margin-bottom:12px;}' +
     '.clinician-card h3{font-family:"Fraunces",serif;font-size:18px;margin:0 0 2px;color:var(--purple-dark);}.clinician-card .role{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}' +
     '.meta-row{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-soft);padding:7px 0;border-top:1px solid #f1eaf7;}.meta-row:first-of-type{border-top:none;}.meta-row svg{flex:none;opacity:.6;}' +
+    '.original-time-box{background:#e6f5ec;border:1.4px solid #a8d9bc;border-radius:10px;padding:11px 13px;margin-top:12px;}' +
+    '.original-time-box .otb-label{font-size:11.5px;font-weight:600;color:#3d7a58;}' +
+    '.original-time-box .otb-value{font-family:\'Fraunces\',serif;font-size:16px;font-weight:600;color:#2d5f42;margin-top:2px;}' +
+    '.otb-instruction{font-size:12px;color:var(--ink-soft);margin:8px 0 0;}' +
     '.slots-card{padding:20px 22px 24px;}.slots-head h3{font-family:"Fraunces",serif;font-size:18px;margin:0;color:var(--purple-dark);}' +
     '.day-tabs{display:flex;gap:6px;margin:16px 0 18px;overflow-x:auto;padding-bottom:2px;}' +
     '.day-tab{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;flex:none;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:600;color:var(--ink-soft);border:1px solid #ece4f3;min-width:56px;transition:all .15s ease;}' +
     '.day-tab .d{display:block;font-size:10px;opacity:.75;font-weight:600;text-transform:uppercase;}.day-tab .n{display:block;font-family:"Fraunces",serif;font-size:16px;margin-top:2px;color:var(--purple-dark);}' +
     '.day-tab.sel{background:var(--purple);border-color:var(--purple);}.day-tab.sel .d,.day-tab.sel .n{color:#fff;}' +
-    '.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px;}' +
+    '.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));column-gap:9px;row-gap:22px;}' +
     '.slot{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 8px;border-radius:10px;text-align:center;border:1.4px solid #ece4f3;font-weight:700;font-size:13.5px;color:var(--purple-dark);position:relative;transition:transform .12s ease,border-color .12s ease,background .12s ease;}' +
     '.slot:hover{border-color:var(--purple-border);transform:translateY(-1px);}.slot.opened{border-color:var(--gold);background:#efe6d3;}' +
     '.slot.opened::after{content:"";position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--gold);}.slot.sel{background:var(--purple);border-color:var(--purple);color:#fff;}' +
-    '.slot.preferred{border-color:var(--purple);border-width:2px;}.slot.preferred::before{content:"★";position:absolute;top:3px;left:6px;font-size:9px;color:var(--purple);}.slot.preferred.sel::before{color:#fff;}' +
+    '.slot.preferred{border-color:#5ba97a;background:#e6f5ec;color:#2d5f42;overflow:visible;}' +
+    '.slot.preferred::before{content:"Usual time";position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:700;background:#4a8f6b;color:#fff;padding:2px 7px;border-radius:99px;white-space:nowrap;}' +
+    '.slot.preferred.sel{background:#4a8f6b;border-color:#4a8f6b;color:#fff;}' +
     '.legend{display:flex;gap:16px;margin-top:16px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap;}.legend span{display:inline-flex;align-items:center;gap:6px;}.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}' +
     '.cta-row{margin-top:22px;}.btn{all:unset;box-sizing:border-box;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:13.5px;padding:13px 22px;border-radius:10px;text-align:center;display:block;width:100%;background:var(--purple);color:#fff;transition:background .15s ease,transform .1s ease,opacity .15s;}' +
     '.btn:hover{background:var(--purple-dark);}.btn:active{transform:scale(.98);}.btn[disabled]{opacity:.4;pointer-events:none;}' +
