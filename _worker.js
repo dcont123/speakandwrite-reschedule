@@ -141,6 +141,7 @@ function pageHtml_(data, token) {
     (data.locationName ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.locationName) + '</div>\n' : '') +
     (data.serviceDuration ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#9B6FC5" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.serviceDuration) + '-minute session</div>\n' : '') +
     (data.serviceName ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12c1.5-4 2.5-4 4 0s2.5 4 4 0 2.5-4 4 0 2.5 4 4 0" stroke="#9B6FC5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' + escapeHtml_(data.serviceName) + '</div>\n' : '') +
+    (data.originalTimeDisplay ? '      <div class="meta-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg>' + escapeHtml_(data.patientFirstName) + '\'s cancelled time was <b>' + escapeHtml_(data.originalTimeDisplay) + '</b></div>\n' : '') +
     '      <div style="margin-top:14px;"><span class="badge purple">This link is just for ' + escapeHtml_(data.patientFirstName) + '</span></div>\n' +
     '    </div>\n' +
     '    <div class="slots-card card">\n' +
@@ -153,6 +154,7 @@ function pageHtml_(data, token) {
     '        <div class="legend">\n' +
     '          <span><i style="background:#fff; border:1.4px solid #ece4f3;"></i> Standard opening</span>\n' +
     '          <span><i style="background:var(--gold-soft); border:1.4px solid var(--gold);"></i> Extra availability</span>\n' +
+    '          <span>★ Your usual time</span>\n' +
     '        </div>\n' +
     '        <div class="cta-row">\n' +
     '          <button class="btn" id="confirmBtn" disabled>Confirm new time</button>\n' +
@@ -198,6 +200,7 @@ function pageCss_() {
     '.slot{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 8px;border-radius:10px;text-align:center;border:1.4px solid #ece4f3;font-weight:700;font-size:13.5px;color:var(--purple-dark);position:relative;transition:transform .12s ease,border-color .12s ease,background .12s ease;}' +
     '.slot:hover{border-color:var(--purple-border);transform:translateY(-1px);}.slot.opened{border-color:var(--gold);background:#efe6d3;}' +
     '.slot.opened::after{content:"";position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--gold);}.slot.sel{background:var(--purple);border-color:var(--purple);color:#fff;}' +
+    '.slot.preferred{border-color:var(--purple);border-width:2px;}.slot.preferred::before{content:"★";position:absolute;top:3px;left:6px;font-size:9px;color:var(--purple);}.slot.preferred.sel::before{color:#fff;}' +
     '.legend{display:flex;gap:16px;margin-top:16px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap;}.legend span{display:inline-flex;align-items:center;gap:6px;}.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;}' +
     '.cta-row{margin-top:22px;}.btn{all:unset;box-sizing:border-box;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:13.5px;padding:13px 22px;border-radius:10px;text-align:center;display:block;width:100%;background:var(--purple);color:#fff;transition:background .15s ease,transform .1s ease,opacity .15s;}' +
     '.btn:hover{background:var(--purple-dark);}.btn:active{transform:scale(.98);}.btn[disabled]{opacity:.4;pointer-events:none;}' +
@@ -250,8 +253,10 @@ function pageJs_(token) {
     '  const el = document.getElementById("slotGrid");\n' +
     '  const slots = daysData[activeDayIdx].slots;\n' +
     '  el.innerHTML = slots.map(function (s, i) {\n' +
-    '    const isOverride = s.source === "override"; const isSel = selectedSlot === s;\n' +
-    '    return \'<button class="slot \' + (isOverride ? "opened" : "") + " " + (isSel ? "sel" : "") + \'" data-i="\' + i + \'">\' + formatTime(s.start) + "</button>";\n' +
+    '    const isOverride = s.source === "override"; const isSel = selectedSlot === s; const isPreferred = !!s.isPreferredTime;\n' +
+    '    const cls = (isOverride ? "opened " : "") + (isPreferred ? "preferred " : "") + (isSel ? "sel" : "");\n' +
+    '    const title = isPreferred ? \' title="Your usual time"\' : "";\n' +
+    '    return \'<button class="slot \' + cls + \'" data-i="\' + i + \'"\' + title + \'>\' + formatTime(s.start) + "</button>";\n' +
     '  }).join("");\n' +
     '  Array.prototype.forEach.call(el.querySelectorAll(".slot"), function (btn) {\n' +
     '    btn.addEventListener("click", function () { selectedSlot = slots[Number(btn.dataset.i)]; renderSlots(); updateCta(); });\n' +
