@@ -88,6 +88,13 @@ async function servePage_(url) {
     return htmlResponse_(errorPageHtml_(data.error));
   }
 
+  // Record that the client genuinely opened their link — this ping is the
+  // only reason "viewed" is knowable at all. Deliberately NOT awaited: the
+  // client's page should never wait on tracking, and a tracking failure
+  // must never stop the page rendering. Fired only for a real page render,
+  // never for the error paths above.
+  fetch(TARGET_URL + '?api=view&t=' + encodeURIComponent(token)).catch(function () {});
+
   return htmlResponse_(pageHtml_(data, token));
 }
 
