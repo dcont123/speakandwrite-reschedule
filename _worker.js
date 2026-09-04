@@ -39,6 +39,14 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
 
+    // Confirmation + decline pings from the gate screens. Proxied like any
+    // other API call so the browser only ever talks to our own domain.
+    if (url.pathname === '/api/confirmed') {
+      return proxyJsonApi_(url, 'confirmed', ['t']);
+    }
+    if (url.pathname === '/api/declined') {
+      return proxyJsonApi_(url, 'declined', ['t']);
+    }
     if (url.pathname === '/api/slots') {
       return proxyJsonApi_(url, 'slots', ['t']);
     }
@@ -140,7 +148,25 @@ function pageHtml_(data, token) {
     '  <p class="pagesub">' + sub + '</p>\n' +
     '  <span class="badge ' + badgeClass + '">' + escapeHtml_(badgeText) + '</span>\n' +
     '  <div class="wave"><svg viewBox="0 0 600 20" preserveAspectRatio="none"><path d="M0,10 C50,2 100,18 150,10 C200,2 250,18 300,10 C350,2 400,18 450,10 C500,2 550,18 600,10"/></svg></div>\n' +
-    '  <div class="client-wrap" id="clientMain">\n' +
+
+    // ---- Screen 1: acknowledge the cancellation ----
+    // The client must confirm they've seen this before anything else is
+    // shown. Confirmation is the signal the practice actually needs; the
+    // rebooking is secondary to it.
+    '  <div class="gate card" id="screenConfirm">\n' +
+    '    <h2 class="gate-title">Please confirm that you understand that your session with ' + escapeHtml_(data.practitionerName) + ' has been cancelled.</h2>\n' +
+    '    <button class="btn gate-btn" id="confirmSeenBtn">Confirm</button>\n' +
+    '  </div>\n' +
+
+    // ---- Screen 2: offer the rebooking ----
+    '  <div class="gate card" id="screenChoice" style="display:none;">\n' +
+    '    <h2 class="gate-title">Please reschedule your cancelled appointment with ' + escapeHtml_(data.practitionerName) + ' below to maintain therapy consistency for ' + escapeHtml_(data.patientFirstName) + '.</h2>\n' +
+    '    <button class="btn gate-btn" id="goRebookBtn">Reschedule Appointment Now</button>\n' +
+    '    <button class="btn gate-btn ghost" id="noThanksBtn">No Thanks</button>\n' +
+    '  </div>\n' +
+
+    // ---- Screen 3: the calendar (hidden until they choose to rebook) ----
+    '  <div class="client-wrap" id="clientMain" style="display:none;">\n' +
     '    <div class="clinician-card card">\n' +
     '      <div class="avatar">' + escapeHtml_(data.practitionerInitials) + '</div>\n' +
     '      <h3>' + escapeHtml_(data.practitionerName) + '</h3>\n' +
@@ -175,6 +201,12 @@ function pageHtml_(data, token) {
     '        </div>\n' +
     '        <div class="error-box" id="errorBox"></div>\n' +
     '      </div>\n' +
+    '    </div>\n' +
+    '  </div>\n' +
+    '  <div class="modal-backdrop" id="declineModal">\n' +
+    '    <div class="modal-box">\n' +
+    '      <div class="modal-tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></svg></div>\n' +
+    '      <p class="modal-text">Thank you for your confirmation. ' + escapeHtml_(data.practitionerFirstName) + ' will see you at your next appointment.</p>\n' +
     '    </div>\n' +
     '  </div>\n' +
     '  <div class="card confirm" id="confirmScreen">\n' +
@@ -224,6 +256,18 @@ function pageCss_() {
     '.cta-row{margin-top:22px;}.btn{all:unset;box-sizing:border-box;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:13.5px;padding:13px 22px;border-radius:10px;text-align:center;display:block;width:100%;background:var(--purple);color:#fff;transition:background .15s ease,transform .1s ease,opacity .15s;}' +
     '.btn:hover{background:var(--purple-dark);}.btn:active{transform:scale(.98);}.btn[disabled]{opacity:.4;pointer-events:none;}' +
     '.hint{font-size:12px;color:var(--ink-soft);text-align:center;display:block;margin-top:10px;}' +
+    '.gate{padding:34px 30px;text-align:center;max-width:560px;margin:0 auto;}' +
+    '.gate-title{font-family:\'Fraunces\',serif;font-size:20px;font-weight:600;color:var(--purple-dark);line-height:1.4;margin:0 0 24px;}' +
+    '.gate-btn{max-width:340px;margin:0 auto 10px;}' +
+    '.btn.ghost{background:transparent;color:var(--purple);border:1.6px solid var(--purple-border);}' +
+    '.btn.ghost:hover{background:var(--purple-bg);}' +
+    '.modal-backdrop{position:fixed;inset:0;background:rgba(43,34,51,.55);z-index:100;display:none;align-items:center;justify-content:center;padding:22px;}' +
+    '.modal-backdrop.show{display:flex;}' +
+    '.modal-box{background:#fff;border-radius:16px;max-width:400px;width:100%;padding:32px 28px;text-align:center;box-shadow:0 24px 60px rgba(43,34,51,.35);}' +
+    '.modal-tick{width:60px;height:60px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;background:#e6f0ea;}' +
+    '.modal-tick svg{width:28px;height:28px;}' +
+    '.modal-tick path{stroke:var(--success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .5s .15s ease forwards;}' +
+    '.modal-text{font-size:15px;color:var(--ink);line-height:1.55;margin:0;}' +
     '.state{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:14px;}' +
     '.error-box{background:#fbeee9;border:1px solid #e3b9a4;color:#8a4632;border-radius:10px;padding:14px 16px;font-size:13.5px;margin-top:14px;display:none;}.error-box.show{display:block;}' +
     '.confirm{display:none;text-align:center;padding:46px 20px 30px;}.confirm.show{display:block;}' +
@@ -315,5 +359,26 @@ function pageJs_(token) {
     '  document.querySelector(".wave").style.display = "none";\n' +
     '  document.getElementById("confirmScreen").classList.add("show");\n' +
     '}\n' +
-    'loadSlots();';
+    '// ---- Gate flow: confirm -> choose -> (calendar | done) ----\n' +
+    'function recordEvent(action) {\n' +
+    '  // Fire-and-forget: the client should never wait on tracking, and a\n' +
+    '  // tracking failure must never block them from rebooking.\n' +
+    '  fetch("/api/" + action + "?t=" + encodeURIComponent(TOKEN)).catch(function () {});\n' +
+    '}\n' +
+    'document.getElementById("confirmSeenBtn").addEventListener("click", function () {\n' +
+    '  recordEvent("confirmed");\n' +
+    '  document.getElementById("screenConfirm").style.display = "none";\n' +
+    '  document.getElementById("screenChoice").style.display = "";\n' +
+    '});\n' +
+    'document.getElementById("goRebookBtn").addEventListener("click", function () {\n' +
+    '  document.getElementById("screenChoice").style.display = "none";\n' +
+    '  document.getElementById("clientMain").style.display = "";\n' +
+    '  loadSlots(); // deliberately not loaded earlier — no point fetching availability they may never look at\n' +
+    '});\n' +
+    'document.getElementById("noThanksBtn").addEventListener("click", function () {\n' +
+    '  recordEvent("declined");\n' +
+    '  document.getElementById("screenChoice").style.display = "none";\n' +
+    '  document.querySelector(".wave").style.display = "none";\n' +
+    '  document.getElementById("declineModal").classList.add("show");\n' +
+    '});';
 }
