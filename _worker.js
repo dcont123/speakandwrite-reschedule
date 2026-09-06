@@ -205,7 +205,10 @@ function pageHtml_(data, token) {
     '      <div style="margin-top:14px;"><span class="badge purple">This link is just for ' + escapeHtml_(data.patientFirstName) + '</span></div>\n' +
     '    </div>\n' +
     '    <div class="slots-card card">\n' +
-    '      <div id="loadingState" class="state">Finding available times…</div>\n' +
+    '      <div id="loadingState" class="loading">' +
+    '        <div class="loading-dots"><span></span><span></span><span></span></div>' +
+    '        <div class="loading-text">Finding available times</div>' +
+    '      </div>\n' +
     '      <div id="emptyState" class="state" style="display:none;">No times available in the next 7 days — please contact the practice directly.</div>\n' +
     '      <div id="pickerArea" style="display:none;">\n' +
     '        <div class="slots-head"><h3>Choose a session make-up time</h3></div>\n' +
@@ -296,6 +299,14 @@ function pageCss_() {
     '.modal-tick svg{width:28px;height:28px;}' +
     '.modal-tick path{stroke:var(--success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .5s .15s ease forwards;}' +
     '.modal-text{font-size:15px;color:var(--ink);line-height:1.55;margin:0;}' +
+    '.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:52px 20px;color:var(--ink-soft);font-size:13.5px;}' +
+    '.loading-dots{display:flex;gap:7px;}' +
+    '.loading-dots span{width:9px;height:9px;border-radius:50%;background:var(--purple);opacity:.25;animation:loadPulse 1.15s ease-in-out infinite;}' +
+    '.loading-dots span:nth-child(2){animation-delay:.15s;}' +
+    '.loading-dots span:nth-child(3){animation-delay:.3s;}' +
+    '@keyframes loadPulse{0%,80%,100%{opacity:.22;transform:scale(.82);}40%{opacity:1;transform:scale(1);}}' +
+    '.loading-text{font-weight:600;}' +
+    '@media (prefers-reduced-motion:reduce){.loading-dots span{animation:none;opacity:.5;}}' +
     '.state{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:14px;}' +
     '.error-box{background:#fbeee9;border:1px solid #e3b9a4;color:#8a4632;border-radius:10px;padding:14px 16px;font-size:13.5px;margin-top:14px;display:none;}.error-box.show{display:block;}' +
     '.confirm{display:none;text-align:center;padding:46px 20px 30px;}.confirm.show{display:block;}' +
@@ -317,7 +328,9 @@ function pageJs_(token) {
     '    .catch(onLoadError);\n' +
     '}\n' +
     'function onLoadError(err) {\n' +
-    '  document.getElementById("loadingState").textContent = "Something went wrong loading available times. Please contact the practice.";\n' +
+    '  var ls = document.getElementById("loadingState");\n' +
+    '  ls.className = "state"; // drop the loading animation before showing an error in its place\n' +
+    '  ls.textContent = "Something went wrong loading available times. Please contact the practice.";\n' +
     '  console.error(err);\n' +
     '}\n' +
     'function onSlotsLoaded(days) {\n' +
